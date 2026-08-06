@@ -1,0 +1,23 @@
+services:
+
+  auth-postgres:
+
+    image: postgres:17
+
+    container_name: auth-postgres
+
+    environment:
+      POSTGRES_DB:  ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+
+    ports:
+      - "${DB_PORT}:5432"
+
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
+
+    
+
+volumes:
+  auth_postgres_data:
