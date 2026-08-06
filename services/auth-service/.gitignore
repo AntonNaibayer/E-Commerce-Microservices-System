@@ -63,7 +63,10 @@ share/python-wheels/
 .env
 .env.*
 *.env
-secret_key.txt
+
+# Private cryptographic keys
+keys/*.pem
+
 credentials.json
 
 # ============================================================================
