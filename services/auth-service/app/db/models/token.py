@@ -1,10 +1,9 @@
 import uuid
 from datetime import datetime
 
+from db.base import Base
 from sqlalchemy import DateTime
 from sqlalchemy.orm import Mapped, MappedColumn
-
-from app.db.base import Base
 
 
 class RevokedToken(Base):
