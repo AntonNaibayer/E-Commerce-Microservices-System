@@ -15,7 +15,8 @@ class User(Base):
     )
 
     email: Mapped[str] = mapped_column(
-        unique=True
+        unique=True,
+        index=True
     )
 
     hashed_password: Mapped[bytes] = mapped_column()
