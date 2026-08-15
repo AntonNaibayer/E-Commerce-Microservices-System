@@ -3,12 +3,12 @@ from datetime import UTC, datetime, timedelta
 
 import bcrypt
 import jwt
-from db.models.user import User
-from enums.auth import TokenType
 
+from app.core.config import settings
 from app.core.exceptions import InvalidTokenTypeError
+from app.db.models.user import User
+from app.enums.auth import TokenType
 from app.schemas.token import AccessTokenPayload, RefreshTokenPayload
-from core.config import settings
 
 TOKEN_TYPE_FIELD = "token_type"
 
