@@ -13,10 +13,10 @@ from alembic import context
 # чтобы Alembic понимал импорты вида "from db..." или "from core..."
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "app"))
 
-from core.config import settings
-from db.base import Base
-from db.models.token import RevokedToken
-from db.models.user import User
+from app.core.config import settings
+from app.db.base import Base
+from app.db.models.revoked_token import RevokedToken
+from app.db.models.user import User
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
