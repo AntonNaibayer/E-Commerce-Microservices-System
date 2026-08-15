@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,3 +14,10 @@ async def get_revoked_token_by_jti(
 
     token = await session.scalar(query)
     return token
+
+
+async def build_revoked_token(
+    jti: str,
+    exp: datetime
+) -> RevokedToken:
+    return RevokedToken(jti=jti, expires_at=exp)
