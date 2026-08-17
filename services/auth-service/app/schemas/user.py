@@ -3,6 +3,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from app.enums.user import UserRole
+
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -13,5 +15,6 @@ class UserResponse(BaseModel):
 
     id: uuid.UUID
     email: EmailStr
+    role: UserRole
     created_at: datetime
     is_active: bool

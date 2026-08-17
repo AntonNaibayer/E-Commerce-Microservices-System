@@ -105,7 +105,8 @@ def create_access_token(
 ) -> str:
     jwt_payload = {
         "sub": str(user.id),
-        "email": user.email
+        "email": user.email,
+        "role": user.role,
     }
 
     return create_jwt(

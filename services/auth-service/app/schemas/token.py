@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from pydantic import BaseModel, EmailStr, field_validator
 
 from app.enums.auth import AuthScheme, TokenType
+from app.enums.user import UserRole
 
 
 class TokenInfo(BaseModel):
@@ -34,6 +35,7 @@ class BaseTokenPayload(BaseModel):
 class AccessTokenPayload(BaseTokenPayload):
     token_type: TokenType = TokenType.ACCESS
     email: EmailStr 
+    role: UserRole
 
 class RefreshTokenPayload(BaseTokenPayload):
     token_type: TokenType = TokenType.REFRESH
