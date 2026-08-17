@@ -10,6 +10,10 @@ class TokenInfo(BaseModel):
     refresh_token: str | None = None
     token_type: AuthScheme = AuthScheme.BEARER
 
+class TokenPair(BaseModel):
+    access_token: str
+    refresh_token: str
+
 class AccessToken(BaseModel):
     access_token: str
     token_type: AuthScheme = AuthScheme.BEARER
