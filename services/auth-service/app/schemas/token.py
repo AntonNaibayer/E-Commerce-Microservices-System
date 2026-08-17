@@ -35,7 +35,7 @@ class BaseTokenPayload(BaseModel):
 class AccessTokenPayload(BaseTokenPayload):
     token_type: TokenType = TokenType.ACCESS
     email: EmailStr 
-    role: UserRole
+    role: UserRole  
 
 class RefreshTokenPayload(BaseTokenPayload):
     token_type: TokenType = TokenType.REFRESH
