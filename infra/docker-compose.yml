@@ -1,0 +1,11 @@
+services:
+  nginx:
+    build:
+      context: ./nginx # Папка, где лежат Dockerfile и nginx.conf
+      dockerfile: Dockerfile
+    container_name: api_gateway_nginx
+    ports:
+      - "80:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Секция volumes больше не нужна, так как конфиг "запечен" внутри образа!
