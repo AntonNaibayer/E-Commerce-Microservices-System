@@ -1,3 +1,4 @@
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import pool
@@ -16,10 +17,9 @@ from app.db.models.product_variant import ProductVariant
 # access to the values within the .ini file in use.
 config = context.config
 
-config.set_main_option(
-    "sqlalchemy.url",
-    settings.db.database_url
-)
+
+database_url = os.getenv("ALEMBIC_DATABASE_URL", settings.db.database_url)
+config.set_main_option("sqlalchemy.url", database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
