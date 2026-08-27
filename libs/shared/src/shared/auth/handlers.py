@@ -6,11 +6,12 @@ from .exceptions import ForbiddenError, InvalidTokenError
 
 async def invalid_token_exception_handler(
     request: Request,
-    exc: Exception,
+    exc: Exception
 ) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_401_UNAUTHORIZED,
         content={"detail": "Invalid token"},
+        headers={"WWW-Authenticate": "Bearer"}
     )
 
 
