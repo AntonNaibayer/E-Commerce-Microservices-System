@@ -4,6 +4,8 @@ from decimal import Decimal
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.cache.client import redis_client
+from app.cache.product_variant import ProductVariantCache
 from app.db.crud import product_variant as product_variant_crud
 from app.db.models.product_variant import ProductVariant
 from app.services import product as product_services
@@ -15,6 +17,7 @@ from app.services.exceptions import (
     ProductVariantUpdateConflictError,
 )
 
+product_variant_cache = ProductVariantCache(redis_client)
 
 async def create_product_variant(
     session: AsyncSession,
@@ -57,6 +60,8 @@ async def create_product_variant(
             price_override=price_override,
         )
 
+    await product_variant_cache.invalidate_list()
+    
     return product_variant
 
 async def get_product_variant_or_raise(
@@ -94,12 +99,31 @@ async def get_product_variants(
     limit: int = 20,
 ) -> list[ProductVariant]:
 
-    return await product_variant_crud.get_product_variants(
+    product_variants_cached = await product_variant_cache.get_list(
+        product_id=product_id,
+        offset=offset,
+        limit=limit,
+    )
+
+    if product_variants_cached:
+        return product_variants_cached
+
+    product_variants = await product_variant_crud.get_product_variants(
         session=session,
         product_id=product_id,
         offset=offset,
         limit=limit,
     )
+
+    await product_variant_cache.set_list(
+        product_variants=product_variants,
+        product_id=product_id,
+        offset=offset,
+        limit=limit,
+    )
+
+    return product_variants
+
 
 async def update_product_variant(
     session: AsyncSession,
@@ -129,6 +153,8 @@ async def update_product_variant(
         await session.rollback()
         raise ProductVariantUpdateConflictError(product_variant_id, **fields)
 
+    await product_variant_cache.invalidate_list()
+
     return updated_product_variant
 
 async def delete_product_variant(
@@ -150,3 +176,5 @@ async def delete_product_variant(
     except IntegrityError:
         await session.rollback()
         raise ProductVariantDeletionConflictError(product_variant_id)
+
+    await product_variant_cache.invalidate_list()

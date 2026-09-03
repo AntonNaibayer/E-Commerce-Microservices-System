@@ -4,6 +4,8 @@ from decimal import Decimal
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.cache.client import redis_client
+from app.cache.product import ProductCache
 from app.db.crud import product as product_crud
 from app.db.models.product import Product
 from app.enums.currency import Currency
@@ -19,6 +21,7 @@ from app.services.exceptions import (
 )
 from app.utils.slugify import generate_slug
 
+product_cache = ProductCache(redis_client)
 
 async def create_product(
     session: AsyncSession,
@@ -82,6 +85,8 @@ async def create_product(
             sku=sku,
         )
 
+    await product_cache.invalidate_list()
+    
     return product
 
 async def get_product_or_raise(
@@ -134,11 +139,22 @@ async def get_products(
     offset: int = 0,
     limit: int = 20,
 ) -> list[Product]:
+    cached = await product_cache.get_list(
+        category_id=category_id,
+        brand_id=brand_id,
+        is_active=is_active,
+        offset=offset,
+        limit=limit,
+    )
 
+    if cached:
+        return cached
+
+    
     # не делаю проверку на существование категории и бренда, потому что это лишние
     # запросы к бд, так как даже если они не существуют, получим пустой список
     # товаров, что соответствует бизнес-логике
-    return await product_crud.get_products(
+    products = await product_crud.get_products(
         session=session,
         category_id=category_id,
         brand_id=brand_id,
@@ -146,6 +162,17 @@ async def get_products(
         offset=offset,
         limit=limit,
     )
+
+    await product_cache.set_list(
+        products=products,
+        category_id=category_id,
+        brand_id=brand_id,
+        is_active=is_active,
+        offset=offset,
+        limit=limit,
+    )
+
+    return products
 
 async def update_product(
     session: AsyncSession,
@@ -178,6 +205,8 @@ async def update_product(
             **fields,
         )
 
+    await product_cache.invalidate_list()
+    
     return product
 
 async def delete_product(
@@ -199,3 +228,5 @@ async def delete_product(
     except IntegrityError:
         await session.rollback()
         raise ProductDeletionConflictError(product_id)
+
+    await product_cache.invalidate_list()

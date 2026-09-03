@@ -3,6 +3,8 @@ import uuid
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.cache.brand import BrandCache
+from app.cache.client import redis_client
 from app.db.crud import brand as brand_crud
 from app.db.models.brand import Brand
 from app.services.exceptions import (
@@ -15,6 +17,8 @@ from app.services.exceptions import (
 from app.utils.slugify import generate_slug
 
 _UNSET = object()
+
+brand_cache = BrandCache(redis_client)
 
 async def create_brand(
     session: AsyncSession,
@@ -41,6 +45,7 @@ async def create_brand(
         await session.rollback()
         raise BrandCreationConflictError(name=brand_name, slug=brand_slug)
 
+    await brand_cache.invalidate_list()
     return brand
 
 async def get_brand_or_raise(
@@ -76,12 +81,27 @@ async def get_brands(
     offset: int = 0,
     limit: int = 20,
 ) -> list[Brand]:
+    brands_from_cache = await brand_cache.get_list(
+        offset=offset,
+        limit=limit
+    )
 
-    return await brand_crud.get_brands(
+    if brands_from_cache:
+        return brands_from_cache
+
+    brands = await brand_crud.get_brands(
         session=session,
         offset=offset,
         limit=limit,
     )
+
+    await brand_cache.set_list(
+        brands=brands,
+        offset=offset,
+        limit=limit,
+    )
+
+    return brands
 
 async def update_brand(
     session: AsyncSession,
@@ -112,13 +132,15 @@ async def update_brand(
         updated_brand = await brand_crud.update_brand(
             session=session,
             brand=brand,
-            **fields,
+            **fields
         )
         await session.commit()
+
     except IntegrityError:
         await session.rollback()
         raise BrandUpdateConflictError(brand_id, **fields)
-
+    
+    await brand_cache.invalidate_list()
     return updated_brand
 
 async def delete_brand(
@@ -137,6 +159,8 @@ async def delete_brand(
             brand=brand,
         )
         await session.commit()
+        await brand_cache.invalidate_list()
+
     except IntegrityError:
         await session.rollback()
         raise BrandDeletionConflictError(brand_id)

@@ -3,6 +3,8 @@ import uuid
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.cache.category import CategoryCache
+from app.cache.client import redis_client
 from app.db.crud import category as category_crud
 from app.db.models.category import Category
 from app.services.exceptions import (
@@ -16,6 +18,8 @@ from app.services.exceptions import (
 from app.utils.slugify import generate_slug
 
 _UNSET = object()
+
+category_cache = CategoryCache(redis_client)
 
 async def create_category(
     session: AsyncSession,
@@ -52,6 +56,7 @@ async def create_category(
         await session.rollback()
         raise CategoryCreationConflictError(name=category_name, slug=category_slug)
 
+    await category_cache.invalidate_list()
     return category
 
 async def get_category_or_raise(
@@ -90,13 +95,30 @@ async def get_categories(
     limit: int = 20,
 ) -> list[Category]:
 
-    return await category_crud.get_categories(
+    cached = await category_cache.get_list(
+        offset=offset,
+        limit=limit
+    )
+
+    if cached:
+        return cached
+
+    categories = await category_crud.get_categories(
         session=session,
         parent_id=parent_id,
         is_active=is_active,
         offset=offset,
         limit=limit,
     )
+
+    await category_cache.set_list(
+        categories=categories,
+        offset=offset,
+        limit=limit,
+    )
+
+    return categories
+
 
 async def update_category(
     session: AsyncSession,
@@ -144,6 +166,7 @@ async def update_category(
         await session.rollback()
         raise CategoryUpdateConflictError(category_id, **fields)
 
+    await category_cache.invalidate_list()
     return updated_category
 
 async def delete_category(
@@ -165,3 +188,5 @@ async def delete_category(
     except IntegrityError:
         await session.rollback()
         raise CategoryDeletionConflictError(category_id)
+
+    await category_cache.invalidate_list()
