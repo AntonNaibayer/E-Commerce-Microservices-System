@@ -1,4 +1,3 @@
-# docker-compose.yml
 services:
   auth-postgres:
     image: postgres:17

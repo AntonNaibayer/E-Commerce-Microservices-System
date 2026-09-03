@@ -1,0 +1,32 @@
+[project]
+name = "catalog-service"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.14.1"
+dependencies = [
+    "alembic>=1.19.1",
+    "asyncpg>=0.31.0",
+    "fastapi[standard]>=0.141.1",
+    "pydantic>=2.13.4",
+    "pydantic-settings>=2.15.0",
+    "pyjwt[crypto]>=2.13.0",
+    "python-slugify>=8.0.4",
+    "redis>=8.1.0",
+    "shared",
+    "sqlalchemy[asyncio]>=2.0.52",
+]
+
+[tool.uv.sources]
+shared = { path = "../../libs/shared", editable = true }
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+]

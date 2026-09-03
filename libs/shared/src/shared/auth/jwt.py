@@ -6,9 +6,9 @@ from .schemas import AccessTokenPayload
 
 
 def decode_access_token(
-    token: str,
-    public_key: str,
-    algorithm: str,
+    token: str, 
+    public_key: str, 
+    algorithm: str
 ) -> AccessTokenPayload:
     try:
         payload = jwt.decode(
@@ -21,6 +21,7 @@ def decode_access_token(
             raise InvalidTokenError()
 
         return AccessTokenPayload.model_validate(payload)
-
-    except (jwt.InvalidTokenError, ValidationError) as e:
+        
+    # Ловим протухший токен, неверную подпись, кривой формат или ошибки Pydantic
+    except (jwt.PyJWTError, ValidationError) as e:
         raise InvalidTokenError() from e
