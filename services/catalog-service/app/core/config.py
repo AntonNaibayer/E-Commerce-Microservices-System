@@ -1,5 +1,3 @@
-from functools import cached_property
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,17 +23,17 @@ class DBSettings(BaseSettings):
         extra="ignore",
     )
 
-
 class RedisSettings(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int
+    REDIS_USER: str
     REDIS_PASS: str
     REDIS_NAME: str
 
     @property
     def redis_url(self) -> str:
         return (
-            f"redis://:{self.REDIS_PASS}@"
+            f"redis://{self.REDIS_USER}:{self.REDIS_PASS}@"
             f"{self.REDIS_HOST}:{self.REDIS_PORT}/0"
         )
 
@@ -44,7 +42,6 @@ class RedisSettings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
-
 
 class Settings(BaseSettings):
     db: DBSettings = DBSettings()
